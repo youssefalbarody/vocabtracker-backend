@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
-app.get('/', (req, res) => {
+app.post('/', (req, res) => {
   res.send('VocabTracker Backend API is running');
 });
 
