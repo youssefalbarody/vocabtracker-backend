@@ -5,7 +5,14 @@ import { lookupDictionary, translateToArabic } from '../services/translate.servi
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+// ✅ CORS (FIX)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
+app.options('*', cors());
+
 app.use(express.json());
 
 // ✅ ROOT
@@ -13,12 +20,12 @@ app.get('/', (req, res) => {
   res.send('VocabTracker Backend API is running');
 });
 
-// ⚠️ TEMP: Error for GET
+// ⚠️ GET not allowed
 app.get('/translate', (req, res) => {
   res.status(405).send('Use POST not GET');
 });
 
-// ✅ TRANSLATE (Real Implementation)
+// ✅ POST translate
 app.post('/translate', async (req, res) => {
   const { word } = req.body;
 
@@ -27,23 +34,18 @@ app.post('/translate', async (req, res) => {
   }
 
   try {
-    // Run dictionary lookup and translation in parallel
     const [dictResult, arabicTranslation] = await Promise.all([
       lookupDictionary(word),
       translateToArabic(word)
     ]);
 
-    // Construct the response
-    // If dictionary lookup failed, dictResult.ok is false, but we might still have a translation
-    // or vice versa.
-    
     res.json({
       original: word,
       english: dictResult.english || word,
       type: dictResult.type || 'unknown',
-      arabic: arabicTranslation, // might be null
+      arabic: arabicTranslation,
       confidence: dictResult.confidence || 0,
-      status: 'accepted' // Logic: if we processed it, it's accepted. Client handles "error" visual if needed.
+      status: 'accepted'
     });
 
   } catch (err) {
@@ -55,4 +57,5 @@ app.post('/translate', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
 
